@@ -150,7 +150,18 @@ export class SessionCommandController {
     const agent = await this.resolveAgent(request.sessionId)
     return this.agents.serializeImageAdmission(agent, async () => {
       try {
-        await this.requireModel(request)
+        const driver = this.ctx.get('sessionDriver')
+        const external = driver && request.provider === driver.provider ? driver : undefined
+        const bound = this.ctx.agents.driverBinding(agent.session)
+        if (bound ? bound.provider !== request.provider : external && this.ctx.agents.turnBoundaryOf(agent.session).lastTurn > 0) {
+          throw new Error('Open a new conversation to change the Session runtime.')
+        }
+        if (external) {
+          const model = (await external.listModels()).find(item => item.id === request.model)
+          if (!model || (request.reasoningEffort !== undefined && !model.reasoning.efforts.some(e => e.id === request.reasoningEffort))) {
+            throw new Error('The selected model or reasoning effort is unavailable.')
+          }
+        } else await this.requireModel(request)
         const selected: AgentModelSelection = {
           provider: request.provider,
           model: request.model,
@@ -158,8 +169,9 @@ export class SessionCommandController {
             ? {}
             : { reasoningEffort: ReasoningEffortId(request.reasoningEffort) }),
         }
-        await this.ctx.llm.resolveCallConfig(selected)
+        if (!external) await this.ctx.llm.resolveCallConfig(selected)
         agent.model.select(selected)
+        if (external) return { selected: { ...selected } }
         void this.ctx.agentDefaultModel.saveSelection(selected).catch((error: unknown) => {
           this.ctx.logger.warn(
             `session-controller: model selection changed for the Session but the default was not saved: ${String(error)}`,
@@ -312,8 +324,16 @@ export class SessionCommandController {
     const hasImage = admission.content.some(part => part.type === 'image')
     const admit = async (): Promise<SessionPromptValue> => {
       try {
+        const runtime = this.ctx.agents.driverBinding(agent.session)
+        if (runtime && this.ctx.get('sessionDriver')?.provider !== runtime.provider) {
+          throw new RemoteError('session/model-unavailable', 'Enable the Session runtime to continue this conversation.',
+            { provider: runtime.provider, model: agent.model.current()?.model ?? '' })
+        }
         if (hasImage) {
           const current = agent.model.current()
+          if (current && current.provider === this.ctx.get('sessionDriver')?.provider) {
+            throw new RemoteError('session/attachment-invalid', 'This runtime accepts text only.', { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' })
+          }
           if (current !== undefined) {
             const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model)
             if (model.inputModalities !== undefined && !model.inputModalities.includes('image')) {
@@ -347,7 +367,7 @@ export class SessionCommandController {
       }
       return { accepted: true }
     }
-    return hasImage ? this.agents.serializeImageAdmission(agent, admit) : admit()
+    return hasImage || this.ctx.get('sessionDriver') ? this.agents.serializeImageAdmission(agent, admit) : admit()
   }
 
   private async requireModel(selection: Pick<AgentModelSelection, 'provider' | 'model'>): Promise<void> {

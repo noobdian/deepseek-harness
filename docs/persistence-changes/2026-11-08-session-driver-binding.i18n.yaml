@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-11-08-session-driver-binding.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-11-08-session-driver-binding.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-11-08-session-driver-binding:
+  en: 68a1a456d6405706
+  zh: d9a277766627e998
+/2026-11-08-session-driver-binding/summary:
+  en: 2ad2ffb2e49d2aeb
+  zh: c3f3aef544c26f04
+/2026-11-08-session-driver-binding/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-11-08-session-driver-binding/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-11-08-session-driver-binding/compatibility:
+  en: c6c23cd95f670464
+  zh: 66547a3b3e8e2052
+/2026-11-08-session-driver-binding/verification:
+  en: ced308f7cb838476
+  zh: ad65ca3a92e7dcd2
+/2026-11-08-session-driver-binding/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269

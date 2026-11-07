@@ -35,6 +35,8 @@ Switching Off deselects the layer and leaves the package installed. Remove is a 
 
 The layer inserts Host rows only, so any profile can select it, including the shipped headless, SDK, and ACP profiles. Existing provider-only consumers follow the [upgrade guide](../../../docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.md).
 
+To use Codex as the main text conversation from a built checkout, run `pnpm dsh web --patch apps/cli/config/examples/codex-session.yml`. Sign in to Codex with ChatGPT, then select Codex in the composer before the first prompt. The model and effort menu follows the account catalog. Changes apply on the next turn of the same thread. Opening a saved conversation reads its DSH history; sending resumes its thread. This overlay uses a read-only Codex workspace and displays completed answers.
+
 ### Configuration
 
 | Field | Default | Meaning |

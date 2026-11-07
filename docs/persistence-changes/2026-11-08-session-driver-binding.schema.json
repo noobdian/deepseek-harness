@@ -1,0 +1,15 @@
+{
+  "formatVersion": 2,
+  "roots": [
+    {"key":"event:session/driver-bound","kind":"event","event":"session/driver-bound","surface":false,"digest":"aa1f1ada10f6974e2608bd8bcbfab3e4414db8cf647bdde311fa31b41763849f"}
+  ],
+  "types": [],
+  "nodes": {
+    "0657d3ca5ac4e7bf": {"kind":"primitive","type":"number"},
+    "4cd48f3e5108bd6e": {"kind":"primitive","type":"string"},
+    "aa1f1ada10f6974e": {"kind":"object","properties":[{"name":"data","type":"c3733575b97a59f4","optional":false},{"name":"ignorable","type":"dacf3d5f3e4ff619","optional":true},{"name":"seq","type":"0657d3ca5ac4e7bf","optional":false},{"name":"time","type":"0657d3ca5ac4e7bf","optional":false},{"name":"type","type":"aa7377b3f4f2cc8a","optional":false}],"indices":[]},
+    "aa7377b3f4f2cc8a": {"kind":"literal","value":"session/driver-bound"},
+    "c3733575b97a59f4": {"kind":"object","properties":[{"name":"provider","type":"4cd48f3e5108bd6e","optional":false},{"name":"threadId","type":"4cd48f3e5108bd6e","optional":true}],"indices":[]},
+    "dacf3d5f3e4ff619": {"kind":"literal","value":true}
+  }
+}

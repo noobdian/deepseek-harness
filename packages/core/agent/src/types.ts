@@ -65,6 +65,9 @@ declare module '@deepseek-ai/dsh-session-projection/types' {
 
 /** Turn and step positions recorded in a Session. */
 export interface TurnBoundaryProjection {
+  /** Last external conversation binding; its sequence distinguishes inherited history. */
+  readonly driver?: { seq: SessionSeq; provider: string; threadId?: string }
+
   /** Seq of the open turn's `turn/start`, or null between turns. */
   readonly openTurnStartSeq: OptionalSessionSeq
   /** Seq of the latest `step/start` event, or null before the first step. */

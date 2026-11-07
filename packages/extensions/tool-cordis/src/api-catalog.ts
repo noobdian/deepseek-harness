@@ -271,6 +271,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'the current turn and step positions; do not mutate the returned value.',
       },
       {
+        signature: 'driverBinding(session: Session): TurnBoundaryProjection[\'driver\']',
+        description: 'Read the Session-owned driver binding, excluding inherited fork history.',
+        parameters: [{ name: 'session', description: 'Session being driven.' }],
+        returns: 'binding established in this Session, if any.',
+      },
+      {
         signature: 'currentInitiator(): Agent | undefined',
         description: 'Read the Agent that initiated the inherited asynchronous driver chain. Use this optional form for logging, tracing, metrics, or host attribution that also supports agentless calls. When a parent creates a child, setup reports the causal parent while the setup callback\'s Agent parameter identifies the child.',
         parameters: [],
@@ -2831,6 +2837,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Stream a complete live-control baseline followed by replacement frames.',
         parameters: [{ name: 'signal', description: 'cancellation owned by the Remote stream carrier.' }],
         returns: 'one complete baseline followed by live replacement frames.',
+      },
+    ],
+  },
+  {
+    key: 'sessionDriver',
+    summary: 'Plugin responsible for an external model catalog and full conversation turns.',
+    description: 'Plugin responsible for an external model catalog and full conversation turns.',
+    methods: [
+      {
+        signature: 'listModels(): Promise<SessionDriverModel[]>',
+        description: 'Discover picker entries under the active account.',
+        parameters: [],
+        returns: 'model ids and their available reasoning efforts.',
+      },
+      {
+        signature: 'run(session: Session, selection: ModelSelection, input: string[], signal: AbortSignal): Promise<string>',
+        description: 'Complete one turn, preserving the remote conversation across Host restarts.',
+        parameters: [{ name: 'session', description: 'owner of the remote conversation binding.' }, { name: 'selection', description: 'model and reasoning effort captured at turn start.' }, { name: 'input', description: 'admitted text in message order.' }, { name: 'signal', description: 'interruption or driver disposal.' }],
+        returns: 'the completed assistant answer.',
       },
     ],
   },
@@ -8323,6 +8348,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SessionCreateValue {\n    readonly sessionId: SessionId;\n    readonly agentPreset?: string;\n}',
   },
   {
+    name: 'SessionDriverModel',
+    declaration: 'export interface SessionDriverModel {\n    id: string;\n    name: string;\n    reasoning: {\n        efforts: {\n            id: string;\n            name: string;\n        }[];\n        defaultEffort: string;\n    };\n}',
+  },
+  {
     name: 'SessionEndInput',
     declaration: 'export interface SessionEndInput {\n    reason: \'clear\' | \'logout\' | \'prompt_input_exit\' | \'resume\' | \'other\';\n    sessionId: string;\n}',
   },
@@ -9720,7 +9749,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'TurnBoundaryProjection',
-    declaration: 'export interface TurnBoundaryProjection {\n    readonly openTurnStartSeq: OptionalSessionSeq;\n    readonly lastStepStartSeq: OptionalSessionSeq;\n    readonly lastStepBoundary: {\n        readonly kind: \'start\' | \'end\';\n        readonly seq: SessionSeq;\n    } | null;\n    readonly lastTurn: number;\n}',
+    declaration: 'export interface TurnBoundaryProjection {\n    readonly driver?: {\n        seq: SessionSeq;\n        provider: string;\n        threadId?: string;\n    };\n    readonly openTurnStartSeq: OptionalSessionSeq;\n    readonly lastStepStartSeq: OptionalSessionSeq;\n    readonly lastStepBoundary: {\n        readonly kind: \'start\' | \'end\';\n        readonly seq: SessionSeq;\n    } | null;\n    readonly lastTurn: number;\n}',
   },
   {
     name: 'TurnCompleteInput',

@@ -7,6 +7,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
+import { CodexSessionDriver } from './session-driver.ts'
 import z from '@deepseek-ai/schemastery'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
 import {
@@ -36,6 +37,8 @@ const DEFAULT_PROVIDER_NAME = 'codex'
 export interface Config {
   /** Provider name on `ctx.subagents` (default `codex`). */
   providerName?: string
+  /** Mount only the account-backed Session runtime. */
+  sessionDriverOnly?: boolean
   /** Native Codex model fixed for this instance; omitted to inherit Codex settings. */
   model?: string
   /**
@@ -50,6 +53,7 @@ export interface Config {
 }
 
 export const Config: z<Config> = z.object({
+  sessionDriverOnly: z.boolean().default(false),
   providerName: z.string().min(1).default(DEFAULT_PROVIDER_NAME),
   model: z.string().min(1),
   env: z.dict(z.string()).default({}),
@@ -58,7 +62,7 @@ export const Config: z<Config> = z.object({
   disposeGraceMs: z.number().default(DEFAULT_DISPOSE_GRACE_MS),
 })
 
-type ResolvedConfig = Omit<Required<Config>, 'model'> & Pick<Config, 'model'>
+type ResolvedConfig = Omit<Required<Config>, 'model' | 'sessionDriverOnly'> & Pick<Config, 'model'>
 
 class CodexProvider implements SubagentProvider {
   readonly capabilities: SubagentCapabilities = NO_START_CAPABILITIES
@@ -121,6 +125,10 @@ export function apply(ctx: Context, config: Config): void {
     throw new Error(
       `subagent-codex: disposeGraceMs must be no greater than ${MAX_TIMER_DELAY_MS}`,
     )
+  }
+  if (config.sessionDriverOnly) {
+    ctx.plugin(CodexSessionDriver, resolved.disposeGraceMs)
+    return
   }
   ctx.subagents.registerProvider(new CodexProvider(
     resolved.providerName,

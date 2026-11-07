@@ -74,6 +74,8 @@ Events provide extension points in three domains.
 
 Subagent Activations own runtime tree membership.
 
+An optional `sessionDriver` binds the first text turn to an external conversation and applies later model selections at turn boundaries.
+
 AgentLoop rolls back failed initialization and awaits serial `agent/created` before queued work; unload retains resources through teardown ([ordering](../packages/core/agent-loop/README.md#understand-the-implementation)).
 
 [Event producers and consumers](event-producer-consumer.md).

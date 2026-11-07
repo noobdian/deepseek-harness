@@ -64,11 +64,21 @@ export async function buildModelCatalog(
   }))
   const groups = catalog.flatMap(item => item.kind === 'group' ? [item.group] : [])
     .filter(group => group.models.length > 0)
+  const failures = catalog.flatMap(item => item.kind === 'failure' ? [item.failure] : [])
+  const driver = ctx.get('sessionDriver')
+  if (driver) {
+    try {
+      const models = await driver.listModels()
+      if (models.length) groups.push({ id: driver.provider, name: driver.displayName, models })
+    } catch (error) {
+      failures.push({ id: driver.provider, name: driver.displayName, message: error instanceof Error ? error.message : String(error) })
+    }
+  }
   return {
     default: { ...defaultSelection },
     routableProviders: groups.map(group => group.id),
     groups,
-    failures: catalog.flatMap(item => item.kind === 'failure' ? [item.failure] : []),
+    failures,
   }
 }
 

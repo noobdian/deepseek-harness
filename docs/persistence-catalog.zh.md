@@ -58,6 +58,7 @@
 | `event:sandbox/mode` | event | `516da4cdd6d2f1e5ce488e648578ca51f40e458f707b803e5b24de870e799415` | [`{ type: "sandbox/mode" }`](#persistence-type-sha256-516da4cdd6d2f1e5ce488e648578ca51f40e458f707b803e5b24de870e799415) |
 | `event:schedule/change` | event | `a0a2e5c42e1c929445ecd1cd70f49be6b66441894ec72c08e8ae332821d4a3cb` | [`{ type: "schedule/change" }`](#persistence-type-sha256-a0a2e5c42e1c929445ecd1cd70f49be6b66441894ec72c08e8ae332821d4a3cb) |
 | `event:session-log-deepseek/delivery-accepted` | event | `d63b8b8ffad9c02fd80c43a17df4f240c1fe8118ecca9de34f9d5871838ab5b9` | [`{ type: "session-log-deepseek/delivery-accepted" }`](#persistence-type-sha256-d63b8b8ffad9c02fd80c43a17df4f240c1fe8118ecca9de34f9d5871838ab5b9) |
+| `event:session/driver-bound` | event | `aa1f1ada10f6974e2608bd8bcbfab3e4414db8cf647bdde311fa31b41763849f` | [`{ type: "session/driver-bound" }`](#persistence-type-sha256-aa1f1ada10f6974e2608bd8bcbfab3e4414db8cf647bdde311fa31b41763849f) |
 | `event:session/end-seed` | event | `5e6db6e24948d4a853c71cb9fabd252ad051ce93d4672c1266cf837c1c17b84e` | [`{ type: "session/end-seed" }`](#persistence-type-sha256-5e6db6e24948d4a853c71cb9fabd252ad051ce93d4672c1266cf837c1c17b84e) |
 | `event:session/title` | event | `1b912703e2d64f91c99c675b8f805b01076c8325b905c1218ad81ef0b24909d5` | [`{ type: "session/title" }`](#persistence-type-sha256-1b912703e2d64f91c99c675b8f805b01076c8325b905c1218ad81ef0b24909d5) |
 | `event:session/title-llm-request` | event | `d95c624eddecdacf1ee74356196c09d2f3fcd625714be5e852a6b643fa12a7ca` | [`{ type: "session/title-llm-request" }`](#persistence-type-sha256-d95c624eddecdacf1ee74356196c09d2f3fcd625714be5e852a6b643fa12a7ca) |
@@ -188,7 +189,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 }
 ```
 
-来源：[`packages/core/agent/src/types.ts:110`](../packages/core/agent/src/types.ts)
+来源：[`packages/core/agent/src/types.ts:113`](../packages/core/agent/src/types.ts)
 
 ### `agent-preset/*`
 
@@ -702,7 +703,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'model/selection': ModelSelection
 ```
 
-来源：[`packages/core/agent/src/types.ts:121`](../packages/core/agent/src/types.ts)
+来源：[`packages/core/agent/src/types.ts:124`](../packages/core/agent/src/types.ts)
 
 ### `permission/*`
 
@@ -818,6 +819,17 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 来源：[`packages/schedule/schedule/src/types.ts:625`](../packages/schedule/schedule/src/types.ts)
 
 ### `session/*`
+
+<a id="sessiondriver-bound--log-only"></a>
+
+#### `session/driver-bound` — log-only
+
+```ts persistence-catalog
+/** External conversation owned by this Session, never inherited from a fork. */
+'session/driver-bound': { provider: string; threadId?: string }
+```
+
+来源：[`packages/core/agent/src/session-driver.ts:8`](../packages/core/agent/src/session-driver.ts)
 
 <a id="sessionend-seed--log-only"></a>
 
@@ -2527,6 +2539,14 @@ SHA-256: `47e5d84f1a93450a78c7f3954b43990d0f629af7c034a56313e5deb63e772c1b`
 SHA-256: `7f13860ee89a2d35ce09f958e85a04566cd59cb1de1d73a9619a9b631961dc71`
 
 `"session-reference"`
+
+<a id="persistence-type-sha256-aa7377b3f4f2cc8a7b6d889ba4f8c0808f8c19394452ea44ca462b0f0e7fe0b4"></a>
+
+### `"session/driver-bound"`
+
+SHA-256: `aa7377b3f4f2cc8a7b6d889ba4f8c0808f8c19394452ea44ca462b0f0e7fe0b4`
+
+`"session/driver-bound"`
 
 <a id="persistence-type-sha256-1c2686c0682e7bc51d61117b2652bd4a80707e331aa276d6ef915ae32534a330"></a>
 
@@ -4391,7 +4411,7 @@ SHA-256: `719c51f67074f97034a6c94297fe1f4b5d3c8d392c57586dab732aa5398c7a91`
 
 SHA-256: `f09e5e7acf5ff5ccd193ff2eeec015fa2ff7c29d98bc465f8c3302058d47e29b`
 
-来源：[`packages/core/agent/src/types.ts:79`](../packages/core/agent/src/types.ts)
+来源：[`packages/core/agent/src/types.ts:82`](../packages/core/agent/src/types.ts)
 
 | 属性 | 存在性 | 类型 |
 |---|---|---|
@@ -6487,7 +6507,7 @@ SHA-256: `17d1afb770d9941936130996da00dc86782cfef731d8d6526162c301256a4ac3`
 
 SHA-256: `e1880c67e735e228f3555df8a55a492db2c0b0c71bc8859e938e184a46c7db51`
 
-来源：[`packages/core/agent/src/types.ts:110`](../packages/core/agent/src/types.ts)
+来源：[`packages/core/agent/src/types.ts:113`](../packages/core/agent/src/types.ts)
 
 | 属性 | 存在性 | 类型 |
 |---|---|---|
@@ -8003,6 +8023,19 @@ SHA-256: `8a9c990773f798eac10ca8878e6bcc531ee080bc589cac956730e462cc6a09ad`
 |---|---|---|
 | `preset` | 必需 | `string` |
 
+<a id="persistence-type-sha256-c3733575b97a59f4ce89a07fb28865760a99a25c888dfec5bba3830f9c0263f9"></a>
+
+### `{ provider, threadId? }`
+
+SHA-256: `c3733575b97a59f4ce89a07fb28865760a99a25c888dfec5bba3830f9c0263f9`
+
+来源：[`packages/core/agent/src/session-driver.ts:8`](../packages/core/agent/src/session-driver.ts)
+
+| 属性 | 存在性 | 类型 |
+|---|---|---|
+| `provider` | 必需 | `string` |
+| `threadId` | 可选 | `string` |
+
 <a id="persistence-type-sha256-e481c46af3813e0010558e93f578b2986acd658404cec2d1679e3ac2a6c48654"></a>
 
 ### `{ reason, turn }`
@@ -8778,6 +8811,22 @@ SHA-256: `d63b8b8ffad9c02fd80c43a17df4f240c1fe8118ecca9de34f9d5871838ab5b9`
 | `seq` | 必需 | `number` |
 | `time` | 必需 | `number` |
 | `type` | 必需 | `"session-log-deepseek/delivery-accepted"` |
+
+<a id="persistence-type-sha256-aa1f1ada10f6974e2608bd8bcbfab3e4414db8cf647bdde311fa31b41763849f"></a>
+
+<a id="persistence-type-eventsessiondriver-bound"></a>
+
+### `{ type: "session/driver-bound" }`
+
+SHA-256: `aa1f1ada10f6974e2608bd8bcbfab3e4414db8cf647bdde311fa31b41763849f`
+
+| 属性 | 存在性 | 类型 |
+|---|---|---|
+| `data` | 必需 | [`{ provider, threadId? }`](#persistence-type-sha256-c3733575b97a59f4ce89a07fb28865760a99a25c888dfec5bba3830f9c0263f9) |
+| `ignorable` | 可选 | `true` |
+| `seq` | 必需 | `number` |
+| `time` | 必需 | `number` |
+| `type` | 必需 | `"session/driver-bound"` |
 
 <a id="persistence-type-sha256-5e6db6e24948d4a853c71cb9fabd252ad051ce93d4672c1266cf837c1c17b84e"></a>
 

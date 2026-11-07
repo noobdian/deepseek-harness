@@ -8,6 +8,11 @@ import { z as zod } from 'zod'
 const sessionSeqSchema = zod.number().int().nonnegative().transform(brandNumber<SessionSeq>)
 
 const turnBoundaryProjectionSchema: zod.ZodType<TurnBoundaryProjection> = zod.object({
+  driver: zod.object({
+    seq: sessionSeqSchema,
+    provider: zod.string().min(1),
+    threadId: zod.string().min(1).exactOptional(),
+  }).exactOptional(),
   openTurnStartSeq: sessionSeqSchema.nullable(),
   lastStepStartSeq: sessionSeqSchema.nullable(),
   lastStepBoundary: zod.object({
@@ -20,7 +25,7 @@ const turnBoundaryProjectionSchema: zod.ZodType<TurnBoundaryProjection> = zod.ob
 /** Host projection of agent turn and step boundaries. */
 export const turnBoundaryProjectionDefinition = {
   key: 'turnBoundary',
-  stateVersion: 2,
+  stateVersion: 3,
   stateSchema: turnBoundaryProjectionSchema,
   init: () => ({
     openTurnStartSeq: null,
@@ -30,6 +35,8 @@ export const turnBoundaryProjectionDefinition = {
   }),
   apply: (state, event) => {
     switch (event.type) {
+      case 'session/driver-bound':
+        return { ...state, driver: { seq: event.seq, ...event.data } }
       case 'turn/start':
         return {
           ...state,

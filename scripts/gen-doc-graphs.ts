@@ -698,6 +698,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Reads the default ModelSelection from volatile Config and saves selections through the profile editor.',
   },
   {
+    key: 'sessionDriver',
+    pkg: 'agent',
+    title: 'External Session runtime',
+    mode: 'seam',
+    implementations: ['subagent-codex'],
+    consumers: ['api-session-controller', 'agent-loop'],
+    note: 'Lists account models and executes text turns in a persistent external conversation.',
+  },
+  {
     key: 'agentLoop',
     pkg: 'agent-loop',
     title: 'Concrete loop driver',

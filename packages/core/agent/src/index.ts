@@ -18,6 +18,7 @@ import type { Agent, TurnBoundaryProjection } from './types.ts'
 import type { AgentOptions, SessionStartSource } from './runtime-types.ts'
 import { turnBoundaryProjectionDefinition } from './projection.ts'
 
+export * from './session-driver.ts'
 export * from './runtime-types.ts'
 export * from './types.ts'
 export { AgentModel, modelSelectionProjectionDefinition, installModelSelection } from './model-selection.ts'
@@ -299,6 +300,15 @@ export class AgentRegistry extends Service {
    */
   turnBoundaryOf(session: Session): TurnBoundaryProjection {
     return this.turnBoundaryProjectionHandle.stateOf(session)
+  }
+
+  /** Read the Session-owned driver binding, excluding inherited fork history.
+   * @param session - Session being driven.
+   * @returns binding established in this Session, if any.
+   */
+  driverBinding(session: Session): TurnBoundaryProjection['driver'] {
+    const driver = this.turnBoundaryOf(session).driver
+    return driver && driver.seq >= session.inheritedEventCount ? driver : undefined
   }
 
   /**

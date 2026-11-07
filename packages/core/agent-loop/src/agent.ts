@@ -10,6 +10,7 @@ import type {
   AgentEventDispatch,
   AgentOptions,
   AgentStatus,
+  SessionDriver,
   CancelOptions,
   ModelSelection,
   ModelSelectionProjectionState,
@@ -323,6 +324,34 @@ export class ReactLoopAgent implements Agent {
     return !headerEquals(baseline, canonicalHeader({ ...baseline, tools: [...tools] }))
   }
 
+  /** Commit the text actually passed to the external runtime before executing the turn. */
+  private async runExternalTurn(driver: SessionDriver, selection: ModelSelection, turn: number, signal: AbortSignal): Promise<void> {
+    const messages = this.inbox.claim('next-turn', turn)
+    if (!messages.length) return
+    if (!this.loopCtx.agents.driverBinding(this.session)) {
+      this.session.append('session/driver-bound', { provider: driver.provider })
+    }
+    this.session.append('step/start', { turn, step: 1 })
+    try {
+      const input = messages.flatMap((message) => {
+        this.session.append('user/message', message, { surfaceOp: 'append' })
+        return message.content.map((block) => {
+          if (block.type !== 'text') throw new Error('The selected runtime accepts text only.')
+          return block.text
+        })
+      })
+      const answer = await driver.run(this.session, selection, input, signal)
+      signal.throwIfAborted()
+      const message = createAssistantMessage({
+        content: [{ type: 'text', text: answer }],
+        source: { provider: selection.provider, model: selection.model },
+      })
+      this.session.append('assistant/message', { turn, step: 1, message, stream: [] }, { surfaceOp: 'append' })
+    } finally {
+      this.session.append('step/end', { turn, step: 1 })
+    }
+  }
+
   /** Open one turn before claiming its first proposed step. */
   private async turn(): Promise<boolean> {
     if (this.phase.kind !== 'running') {
@@ -341,63 +370,75 @@ export class ReactLoopAgent implements Agent {
     let turnEnds: TurnEndReason | null = null
     let target: InboxTarget = 'next-turn'
     try {
-      while (true) {
-        signal.throwIfAborted()
-        const step = phase.step + 1
-        const decision = await this.preStep(target, { turn, step })
-        if (decision.kind === 'reject') {
-          turnEnds = { kind: 'blocked' }
-          return false
-        }
-        try {
-          if (turnEnds && decision.messages.length === 0) break
-          // A removed waking message or an enter decision rewritten to empty
-          // still owns the initial turn boundary, but it spends no model call.
-          if (phase.step === 0 && decision.messages.length === 0) {
-            turnEnds = { kind: 'completed' }
+      const selection = this.model.current()
+      const driver = this.loopCtx.get('sessionDriver')
+      const bound = this.loopCtx.agents.driverBinding(this.session)
+      if (bound && (!driver || driver.provider !== bound.provider || selection?.provider !== bound.provider)) {
+        throw new Error('The runtime bound to this Session is unavailable.')
+      }
+      if (driver && selection?.provider === driver.provider) {
+        if (!bound && turn > 1) throw new Error('Open a new conversation to change the Session runtime.')
+        await this.runExternalTurn(driver, selection, turn, signal)
+        turnEnds = { kind: 'completed' }
+      } else {
+        while (true) {
+          signal.throwIfAborted()
+          const step = phase.step + 1
+          const decision = await this.preStep(target, { turn, step })
+          if (decision.kind === 'reject') {
+            turnEnds = { kind: 'blocked' }
             return false
           }
-          signal.throwIfAborted()
-          this.session.append('step/start', { turn, step })
-          phase.step = step
-          const toolRecovery = new ToolCallRecovery()
-          const stopRecovery = this.ctx.on('session/event', (session, event) => {
-            if (session === this.session) toolRecovery.observe(event)
-          })
           try {
-            // max-tokens is sticky: once any step hits the ceiling, later steps
-            // that complete normally must not downgrade the turn outcome.
-            const stepEnd = await this.step(decision)
-            // max-tokens stays sticky: a later completed step must not
-            // downgrade the turn outcome.
-            if (turnEnds === null || turnEnds.kind !== 'max-tokens') turnEnds = stepEnd
-          } catch (error: unknown) {
-            try {
-              for (const event of toolRecovery.results()) {
-                this.session.append('tool/result', event.data, {
-                  surfaceOp: 'append',
-                  ...event.sourceEventSeqs === undefined ? {} : { sourceEventSeqs: event.sourceEventSeqs },
-                })
-              }
-            } catch (recoveryError: unknown) {
-              throw new AggregateError([error, recoveryError], 'Step failed and its pending tool results could not be recorded', { cause: error })
+            if (turnEnds && decision.messages.length === 0) break
+            // A removed waking message or an enter decision rewritten to empty
+            // still owns the initial turn boundary, but it spends no model call.
+            if (phase.step === 0 && decision.messages.length === 0) {
+              turnEnds = { kind: 'completed' }
+              return false
             }
-            throw error
+            signal.throwIfAborted()
+            this.session.append('step/start', { turn, step })
+            phase.step = step
+            const toolRecovery = new ToolCallRecovery()
+            const stopRecovery = this.ctx.on('session/event', (session, event) => {
+              if (session === this.session) toolRecovery.observe(event)
+            })
+            try {
+              // max-tokens is sticky: once any step hits the ceiling, later steps
+              // that complete normally must not downgrade the turn outcome.
+              const stepEnd = await this.step(decision)
+              // max-tokens stays sticky: a later completed step must not
+              // downgrade the turn outcome.
+              if (turnEnds === null || turnEnds.kind !== 'max-tokens') turnEnds = stepEnd
+            } catch (error: unknown) {
+              try {
+                for (const event of toolRecovery.results()) {
+                  this.session.append('tool/result', event.data, {
+                    surfaceOp: 'append',
+                    ...event.sourceEventSeqs === undefined ? {} : { sourceEventSeqs: event.sourceEventSeqs },
+                  })
+                }
+              } catch (recoveryError: unknown) {
+                throw new AggregateError([error, recoveryError], 'Step failed and its pending tool results could not be recorded', { cause: error })
+              }
+              throw error
+            } finally {
+              stopRecovery()
+              this.session.append('step/end', { turn, step })
+            }
           } finally {
-            stopRecovery()
-            this.session.append('step/end', { turn, step })
+            // Admission closes once the step's tool batch settles or no step opens.
+            decision.toolSet.dispose()
           }
-        } finally {
-          // Admission closes once the step's tool batch settles or no step opens.
-          decision.toolSet.dispose()
-        }
-        signal.throwIfAborted()
-        if (turnEnds && this.inbox.nextStep.length === 0) {
-          await this.dispatch.serial('agent/turn-stopping', { turn, signal })
           signal.throwIfAborted()
+          if (turnEnds && this.inbox.nextStep.length === 0) {
+            await this.dispatch.serial('agent/turn-stopping', { turn, signal })
+            signal.throwIfAborted()
+          }
+          if (turnEnds && this.inbox.nextStep.length === 0) break
+          target = 'next-step'
         }
-        if (turnEnds && this.inbox.nextStep.length === 0) break
-        target = 'next-step'
       }
     } catch (error: unknown) {
       // A cause is present exactly while the signal is aborted.

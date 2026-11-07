@@ -499,6 +499,8 @@ type Branded<B extends string> = string & { readonly [BRAND]: B }
 ```ts type-equiv
 /** Turn and step positions recorded in a Session. */
 interface TurnBoundaryProjection {
+  /** Last external conversation binding; its sequence distinguishes inherited history. */
+  readonly driver?: { seq: SessionSeq; provider: string; threadId?: string }
   /** Seq of the open turn's `turn/start`, or null between turns. */
   readonly openTurnStartSeq: OptionalSessionSeq
   /** Seq of the latest `step/start` event, or null before the first step. */
@@ -509,6 +511,8 @@ interface TurnBoundaryProjection {
   readonly lastTurn: number
 }
 ```
+
+外部会话驱动通过 `SessionDriverModel` 提供模型标识、显示名称、可选推理强度和默认强度。
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 
@@ -706,6 +710,12 @@ Initiator methods provide same-process causal attribution only. Ambient presence
  */
 turnBoundaryOf(session: Session): TurnBoundaryProjection
 
+/** Read the Session-owned driver binding, excluding inherited fork history.
+ * @param session - Session being driven.
+ * @returns binding established in this Session, if any.
+ */
+driverBinding(session: Session): TurnBoundaryProjection['driver']
+
 /**
  * Read the Agent that initiated the inherited asynchronous driver chain.
  * Use this optional form for logging, tracing, metrics, or host attribution
@@ -853,6 +863,32 @@ list(): Agent[]
 Types: [Session](session.zh.md)
 
 Source: [`packages/core/agent/src/index.ts`](../../packages/core/agent/src/index.ts)
+
+<a id="ctxsessiondriver--sessiondriver"></a>
+
+### `ctx.sessionDriver` — `SessionDriver`
+
+Plugin responsible for an external model catalog and full conversation turns.
+
+```ts cordis-catalog
+/** Discover picker entries under the active account.
+ * @returns model ids and their available reasoning efforts.
+ */
+listModels(): Promise<SessionDriverModel[]>
+
+/** Complete one turn, preserving the remote conversation across Host restarts.
+ * @param session - owner of the remote conversation binding.
+ * @param selection - model and reasoning effort captured at turn start.
+ * @param input - admitted text in message order.
+ * @param signal - interruption or driver disposal.
+ * @returns the completed assistant answer.
+ */
+run(session: Session, selection: ModelSelection, input: string[], signal: AbortSignal): Promise<string>
+```
+
+Types: [Session](session.zh.md)
+
+Source: [`packages/core/agent/src/session-driver.ts`](../../packages/core/agent/src/session-driver.ts)
 
 <a id="agent-events"></a>
 

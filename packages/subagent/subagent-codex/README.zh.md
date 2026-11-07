@@ -35,6 +35,8 @@ kind: "package-bundle"
 
 此层只插入 Host 条目，因此任何配置（包括随附的 headless、SDK 和 ACP）都可以选择它。原有仅提供方用法请遵循[升级指南](../../../docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.zh.md)。
 
+从已构建的仓库运行 `pnpm dsh web --patch apps/cli/config/examples/codex-session.yml` 可启用 Codex 主文本对话。使用 ChatGPT 登录 Codex，然后在首条消息前从输入框选择 Codex。模型与推理强度菜单来自账号目录，修改在同一线程的下一轮生效。打开历史时读取 DSH 记录，再次发送时恢复原线程。该配置使用只读 Codex 工作区，展示已完成的答复。
+
 ### 配置
 
 | 字段 | 默认值 | 含义 |
